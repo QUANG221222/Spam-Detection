@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🛡️ Spam Detection System</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1000px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .tab-button {
+        padding: 12px 25px;
+        border: none;
+        background: none;
+        font-size: 1em;
+        cursor: pointer;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .tab-button:hover {
+        color: #667eea;
+      }
+
+      .tab-button.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+
+      .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Single Message Tab */
+      .input-group {
+        margin-bottom: 20px;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .input-group textarea {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1em;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        resize: vertical;
+        min-height: 120px;
+        transition: border-color 0.3s ease;
+      }
+
+      .input-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      /* File Upload - Drag & Drop */
+      .drop-zone {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9ff;
+      }
+
+      .drop-zone:hover,
+      .drop-zone.dragover {
+        background: #f0f1ff;
+        border-color: #764ba2;
+        transform: scale(1.01);
+      }
+
+      .drop-zone-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+      }
+
+      .drop-zone h3 {
+        color: #667eea;
+        margin-bottom: 8px;
+      }
+
+      .drop-zone p {
+        color: #999;
+        font-size: 0.95em;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      /* Buttons */
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+      }
+
+      button {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        flex: 1;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-secondary {
+        background: #f0f1ff;
+        color: #667eea;
+      }
+
+      .btn-secondary:hover {
+        background: #e8ebff;
+      }
+
+      /* Results */
+      .results {
+        margin-top: 30px;
+        display: none;
+      }
+
+      .results.show {
+        display: block;
+        animation: slideUp 0.4s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .result-card {
+        background: #f8f9ff;
+        border-left: 5px solid #667eea;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+      }
+
+      .result-card.spam {
+        border-left-color: #ff6b6b;
+      }
+
+      .result-card.ham {
+        border-left-color: #51cf66;
+      }
+
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      .badge.spam {
+        background: #ffe0e0;
+        color: #ff6b6b;
+      }
+
+      .badge.ham {
+        background: #e8f8f5;
+        color: #51cf66;
+      }
+
+      .confidence {
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .result-text {
+        color: #555;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        font-style: italic;
+      }
+
+      .progress-bar {
+        background: #e0e0e0;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+      }
+
+      .progress-fill.spam {
+        background: linear-gradient(90deg, #ff6b6b 0%, #ff8787 100%);
+      }
+
+      /* Statistics */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        color: #999;
+        font-size: 0.9em;
+        text-transform: uppercase;
+      }
+
+      /* Loading */
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .loading.show {
+        display: block;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Alert Messages */
+      .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .alert.show {
+        display: block;
+      }
+
+      .alert.error {
+        background: #ffe0e0;
+        color: #ff6b6b;
+        border-left: 4px solid #ff6b6b;
+      }
+
+      .alert.success {
+        background: #e8f8f5;
+        color: #51cf66;
+        border-left: 4px solid #51cf66;
+      }
+
+      .alert.info {
+        background: #f0f1ff;
+        color: #667eea;
+        border-left: 4px solid #667eea;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 1.8em;
+        }
+
+        .content {
+          padding: 20px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .tab-button {
+          padding: 10px 15px;
+          font-size: 0.9em;
+        }
+      }
+
+      /* API Status */
+      .api-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background: #f8f9ff;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.9em;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #999;
+      }
+
+      .status-dot.connected {
+        background: #51cf66;
+      }
+
+      .status-dot.error {
+        background: #ff6b6b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Elfsight Facebook Chat | Untitled Facebook Chat -->
+      <script src="https://elfsightcdn.com/platform.js" async></script>
+      <div
+        class="elfsight-app-a3856d50-8f0f-424a-ae6b-a590f0084950"
+        data-elfsight-app-lazy
+      ></div>
+      <div class="header">
+        <h1>
+          <span>🛡️</span>
+          <span>Spam Detection System</span>
+        </h1>
+        <p>Phân loại email/tin nhắn thành Spam hoặc Ham</p>
+      </div>
+
+      <div class="content">
+        <!-- API Status -->
+        <div class="api-status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Đang kết nối...</span>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-button active" onclick="switchTab('single')">
+            ✉️ Tin nhắn Đơn
+          </button>
+          <button class="tab-button" onclick="switchTab('file')">
+            📁 Tải File
+          </button>
+          <button class="tab-button" onclick="switchTab('batch')">
+            📋 Nhập Hàng Loạt
+          </button>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Single Message Tab -->
+        <div id="single" class="tab-content active">
+          <div class="input-group">
+            <label for="messageInput">Nhập nội dung tin nhắn:</label>
+            <textarea
+              id="messageInput"
+              placeholder="Ví dụ: Click here to win FREE MONEY now!!!"
+            >
+            </textarea>
+          </div>
+
+          <div class="button-group">
+            <button class="btn-primary" onclick="predictSingle()">
+              🔍 Dự Đoán
+            </button>
+          </div>
+
+          <div id="singleLoading" class="loading">
+            <div class="spinner"></div>
+            <p>Đang phân tích...</p>
+          </div>
+
+          <div id="singleResults" class="results"></div>
+        </div>
+
+        <!-- File Upload Tab -->
+        <div id="file" class="tab-content">
+          <div
+            class="drop-zone"
+            id="dropZone"
+            ondrop="handleDrop(event)"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            <div class="drop-zone-icon">📄</div>
+            <h3>Kéo & Thả file ở đây</h3>
+            <p>hoặc nhấp để chọn file</p>
+            <p style="font-size: 0.85em; margin-top: 8px">
+              Chỉ hỗ trợ file .txt
+            </p>
+          </div>
+
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".txt"
+            onchange="handleFileSelect(event)"
+          />
+
+          <div id="fileName" style="margin-top: 15px; color: #999"></div>
+
+          <div class="button-group" style="margin-top: 20px">
+            <button
+              class="btn-primary"
+              id="uploadBtn"
+              onclick="predictFile()"
+              disabled
+            >
+              🚀 Phân Tích File
+            </button>
+            <button class="btn-secondary" onclick="clearFile()">❌ Xóa</button>
+          </div>
+
+          <div id="fileLoading" class="loading">
+            <div class="spinner"></div>
+            <p>Đang phân tích file...</p>
+          </div>
+
+          <div id="fileResults" class="results"></div>
+        </div>
+
+        <!-- Batch Upload Tab -->
+        <div id="batch" class="tab-content">
+          <div class="input-group">
+            <label for="batchInput">
+              Nhập danh sách tin nhắn (mỗi dòng một tin nhắn):
+            </label>
+            <textarea
+              id="batchInput"
+              placeholder="Dòng 1: Click here for FREE prize!!&#10;Dòng 2: Hello, how are you?&#10;Dòng 3: Congratulations you won..."
+            >
+            </textarea>
+          </div>
+
+          <div class="button-group">
+            <button class="btn-primary" onclick="predictBatch()">
+              🔍 Phân Tích Hàng Loạt
+            </button>
+          </div>
+
+          <div id="batchLoading" class="loading">
+            <div class="spinner"></div>
+            <p>Đang phân tích...</p>
+          </div>
+
+          <div id="batchResults" class="results"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:5000/api";
+
+      // Kiểm tra kết nối API
+      async function checkAPIStatus() {
+        try {
+          const response = await fetch(`${API_BASE}/health`);
+          const data = await response.json();
+
+          if (response.ok && data.model_loaded) {
+            updateStatus("API đã kết nối", "connected");
+          } else if (response.ok) {
+            updateStatus("API kết nối nhưng mô hình chưa sẵn sàng", "error");
+          } else {
+            updateStatus("Lỗi kết nối API", "error");
+          }
+        } catch (error) {
+          updateStatus("Không thể kết nối API", "error");
+          console.error("API Error:", error);
+        }
+      }
+
+      function updateStatus(text, status) {
+        const statusText = document.getElementById("statusText");
+        const statusDot = document.getElementById("statusDot");
+
+        statusText.textContent = text;
+        statusDot.className = `status-dot ${status}`;
+      }
+
+      // Tab Switching
+      function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        document.querySelectorAll(".tab-button").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+
+        // Show selected tab
+        document.getElementById(tabName).classList.add("active");
+        event.target.classList.add("active");
+      }
+
+      // Alert System
+      function showAlert(message, type = "info") {
+        const alert = document.getElementById("alert");
+        alert.textContent = message;
+        alert.className = `alert show ${type}`;
+
+        setTimeout(() => {
+          alert.classList.remove("show");
+        }, 5000);
+      }
+
+      // Single Message Prediction
+      async function predictSingle() {
+        const text = document.getElementById("messageInput").value.trim();
+
+        if (!text) {
+          showAlert("Vui lòng nhập nội dung tin nhắn", "error");
+          return;
+        }
+
+        showLoading("singleLoading", true);
+
+        try {
+          const response = await fetch(`${API_BASE}/predict`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            displaySingleResult(data);
+            showAlert("Phân tích thành công!", "success");
+          } else {
+            showAlert(data.message || "Lỗi phân tích", "error");
+          }
+        } catch (error) {
+          showAlert("Lỗi: " + error.message, "error");
+        } finally {
+          showLoading("singleLoading", false);
+        }
+      }
+
+      function displaySingleResult(data) {
+        const resultsDiv = document.getElementById("singleResults");
+        const isSpam = data.label === "Spam";
+        const cardClass = isSpam ? "spam" : "ham";
+        const badgeEmoji = isSpam ? "⚠️" : "✅";
+
+        const html = `
+                <div class="result-card ${cardClass}">
+                    <div class="result-header">
+                        <h3>${badgeEmoji} ${data.label}</h3>
+                        <span class="badge ${cardClass}">${data.label}</span>
+                    </div>
+                    <div class="result-text">"${data.text}"</div>
+                    <div class="confidence">
+                        Độ tin cậy: ${(data.confidence * 100).toFixed(2)}%
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${cardClass}" style="width: ${data.confidence * 100}%"></div>
+                    </div>
+                </div>
+            `;
+
+        resultsDiv.innerHTML = html;
+        resultsDiv.classList.add("show");
+      }
+
+      // File Upload
+      function handleDragOver(event) {
+        event.preventDefault();
+        document.getElementById("dropZone").classList.add("dragover");
+      }
+
+      function handleDragLeave(event) {
+        document.getElementById("dropZone").classList.remove("dragover");
+      }
+
+      function handleDrop(event) {
+        event.preventDefault();
+        document.getElementById("dropZone").classList.remove("dragover");
+
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+          document.getElementById("fileInput").files = files;
+          handleFileSelect({ target: { files } });
+        }
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        if (!file.name.endsWith(".txt")) {
+          showAlert("Chỉ hỗ trợ file .txt", "error");
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          // 10MB
+          showAlert("File quá lớn (tối đa 10MB)", "error");
+          return;
+        }
+
+        document.getElementById("fileName").textContent =
+          `📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+        document.getElementById("uploadBtn").disabled = false;
+      }
+
+      function clearFile() {
+        document.getElementById("fileInput").value = "";
+        document.getElementById("fileName").textContent = "";
+        document.getElementById("uploadBtn").disabled = true;
+        document.getElementById("fileResults").classList.remove("show");
+      }
+
+      async function predictFile() {
+        const file = document.getElementById("fileInput").files[0];
+
+        if (!file) {
+          showAlert("Vui lòng chọn file", "error");
+          return;
+        }
+
+        showLoading("fileLoading", true);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch(`${API_BASE}/predict-file`, {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            displayFileResults(data);
+            showAlert(
+              `Phân tích ${data.total_messages} tin nhắn thành công!`,
+              "success",
+            );
+          } else {
+            showAlert(data.message || "Lỗi phân tích", "error");
+          }
+        } catch (error) {
+          showAlert("Lỗi: " + error.message, "error");
+        } finally {
+          showLoading("fileLoading", false);
+        }
+      }
+
+      function displayFileResults(data) {
+        const resultsDiv = document.getElementById("fileResults");
+
+        const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${data.total_messages}</div>
+                        <div class="stat-label">Tổng Tin</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #ff6b6b;">${data.spam_count}</div>
+                        <div class="stat-label">Spam</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #51cf66;">${data.ham_count}</div>
+                        <div class="stat-label">Ham</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #667eea;">${data.spam_percentage}</div>
+                        <div class="stat-label">Spam %</div>
+                    </div>
+                </div>
+            `;
+
+        const predictionsHtml = data.predictions
+          .map((pred) => {
+            const isSpam = pred.label === "Spam";
+            const cardClass = isSpam ? "spam" : "ham";
+            const badgeEmoji = isSpam ? "⚠️" : "✅";
+
+            return `
+                    <div class="result-card ${cardClass}">
+                        <div class="result-header">
+                            <span class="badge ${cardClass}">${badgeEmoji} ${pred.label}</span>
+                            <span class="confidence">${(pred.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="result-text">"${pred.text}"</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${cardClass}" style="width: ${pred.confidence * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+
+        resultsDiv.innerHTML = statsHtml + predictionsHtml;
+        resultsDiv.classList.add("show");
+      }
+
+      // Batch Prediction
+      async function predictBatch() {
+        const text = document.getElementById("batchInput").value.trim();
+
+        if (!text) {
+          showAlert("Vui lòng nhập danh sách tin nhắn", "error");
+          return;
+        }
+
+        const texts = text
+          .split("\n")
+          .map((t) => t.trim())
+          .filter((t) => t);
+
+        if (texts.length === 0) {
+          showAlert("Danh sách trống", "error");
+          return;
+        }
+
+        showLoading("batchLoading", true);
+
+        try {
+          const response = await fetch(`${API_BASE}/predict-batch`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ texts }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            displayBatchResults(data);
+            showAlert(
+              `Phân tích ${data.total_messages} tin nhắn thành công!`,
+              "success",
+            );
+          } else {
+            showAlert(data.message || "Lỗi phân tích", "error");
+          }
+        } catch (error) {
+          showAlert("Lỗi: " + error.message, "error");
+        } finally {
+          showLoading("batchLoading", false);
+        }
+      }
+
+      function displayBatchResults(data) {
+        const resultsDiv = document.getElementById("batchResults");
+
+        const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${data.total_messages}</div>
+                        <div class="stat-label">Tổng Tin</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #ff6b6b;">${data.spam_count}</div>
+                        <div class="stat-label">Spam</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #51cf66;">${data.ham_count}</div>
+                        <div class="stat-label">Ham</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #667eea;">${data.spam_percentage}</div>
+                        <div class="stat-label">Spam %</div>
+                    </div>
+                </div>
+            `;
+
+        const predictionsHtml = data.predictions
+          .map((pred) => {
+            const isSpam = pred.label === "Spam";
+            const cardClass = isSpam ? "spam" : "ham";
+            const badgeEmoji = isSpam ? "⚠️" : "✅";
+
+            return `
+                    <div class="result-card ${cardClass}">
+                        <div class="result-header">
+                            <span class="badge ${cardClass}">${badgeEmoji} ${pred.label}</span>
+                            <span class="confidence">${(pred.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="result-text">"${pred.text}"</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${cardClass}" style="width: ${pred.confidence * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+
+        resultsDiv.innerHTML = statsHtml + predictionsHtml;
+        resultsDiv.classList.add("show");
+      }
+
+      // Helper Functions
+      function showLoading(id, show) {
+        const loadingDiv = document.getElementById(id);
+        if (show) {
+          loadingDiv.classList.add("show");
+        } else {
+          loadingDiv.classList.remove("show");
+        }
+      }
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        checkAPIStatus();
+
+        // Check API status every 30 seconds
+        setInterval(checkAPIStatus, 30000);
+      });
+    </script>
+  </body>
+</html>
