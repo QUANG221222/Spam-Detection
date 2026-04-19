@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://spam-detection-6pcx.onrender.com/api";
 
 // Kiểm tra kết nối API
 async function checkAPIStatus() {
