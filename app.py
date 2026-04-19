@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
-import sys
 from spam_classifier import SpamClassifier
 import traceback
-import io
 from pathlib import Path
 
 app = Flask(__name__)

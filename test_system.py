@@ -25,19 +25,19 @@ def test_classifier():
         "Can we schedule a meeting?",
         "URGENT: Update your banking details NOW",
     ]
-    train_labels = [0, 0, 1, 1, 0, 1]
+    train_labels = ["ham", "ham", "spam", "spam", "ham", "spam"]
     
     print(f"Training with {len(train_texts)} samples...\n")
     classifier.train(train_texts, train_labels)
     
     # Test messages
     test_messages = [
-        ("Hello buddy", 0),
-        ("Hello how are you doing", 0),
-        ("FREE MONEY CLICK NOW", 1),
-        ("Let's go for coffee tomorrow", 0),
-        ("CONGRATULATIONS YOU WON PRIZE", 1),
-        ("What time is the meeting", 0),
+        ("Hello buddy", "ham"),
+        ("Hello how are you doing", "ham"),
+        ("FREE MONEY CLICK NOW", "spam"),
+        ("Let's go for coffee tomorrow", "ham"),
+        ("CONGRATULATIONS YOU WON PRIZE", "spam"),
+        ("What time is the meeting", "ham"),
     ]
     
     print("\n" + "-"*60)
@@ -52,7 +52,7 @@ def test_classifier():
         
         status = "✅" if is_correct else "❌"
         print(f"\n{status} Text: {text}")
-        print(f"   Expected: {'SPAM' if expected == 1 else 'HAM'}")
+        print(f"   Expected: {'SPAM' if expected == 'spam' else 'HAM'}")
         print(f"   Predicted: {result['label']}")
         print(f"   Confidence: {result['confidence']*100:.1f}%")
     
